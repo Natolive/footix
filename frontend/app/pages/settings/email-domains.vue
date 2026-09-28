@@ -49,7 +49,7 @@ async function remove(d: EmailDomainDto) {
     <h1 class="font-display text-highlighted text-4xl font-bold tracking-tight leading-[1.05] sm:text-5xl">Domaines</h1>
     <p class="text-muted mt-3">Seules les adresses de ces domaines peuvent créer un compte. Les comptes existants ne changent pas.</p>
 
-    <div class="mt-10 grid gap-6 md:grid-cols-2">
+    <div class="mt-10 grid items-start gap-6 md:grid-cols-[1fr_22rem]">
       <UCard>
         <template #header>
           <h2 class="font-display text-highlighted text-lg font-bold tracking-tight">Autorisés</h2>

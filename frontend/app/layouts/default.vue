@@ -18,6 +18,8 @@ async function onLogout() {
 // Paramètres regroupés dans un seul menu ; sans droit, l'entrée n'apparaît pas (ni le menu s'il est vide).
 const settings = computed(() => allowedSettingsLinks(user.value?.permissions))
 const route = useRoute()
+// Les pages d'administration (tableaux) prennent toute la largeur, le reste reste centré.
+const width = computed(() => (route.path.startsWith('/settings') ? 'max-w-none' : 'max-w-5xl'))
 
 const fullName = computed(() => `${user.value?.firstName ?? ''} ${user.value?.lastName ?? ''}`.trim())
 
@@ -31,7 +33,7 @@ const menu = computed<DropdownMenuItem[][]>(() => [
 <template>
   <div class="min-h-dvh">
     <header class="bg-default/75 border-default sticky top-0 z-40 border-b backdrop-blur-lg">
-      <div class="mx-auto flex h-16 max-w-5xl items-center gap-2 px-4 sm:gap-6 sm:px-6">
+      <div :class="width" class="mx-auto flex h-16 items-center gap-2 px-4 sm:gap-6 sm:px-6">
         <NuxtLink to="/" class="shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4" aria-label="Accueil">
           <BrandLogo class="text-highlighted w-20 sm:w-24" />
         </NuxtLink>
@@ -96,7 +98,7 @@ const menu = computed<DropdownMenuItem[][]>(() => [
         </UDropdownMenu>
       </div>
     </header>
-    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+    <main :class="width" class="mx-auto px-4 py-10 sm:px-6">
       <slot />
     </main>
   </div>

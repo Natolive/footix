@@ -11,6 +11,8 @@ export interface ManagedUserDto {
   role: Role
   extraPermissions: Permission[]
   emailVerified: boolean
+  // Date d'inscription, ISO 8601.
+  createdAt: string
 }
 
 // Un schéma par droit : chacun se modifie séparément.

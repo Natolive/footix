@@ -46,4 +46,5 @@ export const toManagedUser = (user: User): ManagedUserDto => ({
   ...toPublicUser(user),
   extraPermissions: user.extraPermissions,
   emailVerified: !!user.emailVerifiedAt,
+  createdAt: user.createdAt.toISOString(),
 });

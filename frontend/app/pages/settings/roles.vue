@@ -34,7 +34,7 @@ async function save(role: RoleDto, data: UpdateRoleDto) {
     <h1 class="font-display text-highlighted text-4xl font-bold tracking-tight leading-[1.05] sm:text-5xl">Droits</h1>
     <p class="text-muted mt-3">Choisis ce que chaque rôle peut faire.</p>
 
-    <div class="mt-10 grid gap-6 md:grid-cols-2">
+    <div class="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
       <UCard v-for="role in roles" :key="role.role">
         <template #header>
           <h2 class="font-display text-highlighted text-lg font-bold tracking-tight">{{ ROLE_LABELS[role.role] }}</h2>

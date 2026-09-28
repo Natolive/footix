@@ -16,3 +16,4 @@
 - Pages privées par défaut (middleware `auth.global.ts`) ; `definePageMeta({ guest: true })` pour les pages visiteurs.
 - Visite guidée : étapes dans `useOnboardingTour`, élément ciblé par un attribut `data-tour="<nom>"` (jamais une classe CSS).
 - Page réservée : `definePageMeta({ permission: '<droit>' })` ; action masquée si `!user.permissions.includes('<droit>')`.
+- Liste administrable = `UTable` alimenté par un `computed` qui filtre, trie (`manualSorting`, état via `v-model:sorting`) puis découpe la page pour `UPagination` ; recherche multi-mots sans accents ni ponctuation (voir `settings/users.vue`) ; les pages `/settings` sont en pleine largeur (layout `default.vue`) ; sur petit écran, colonne secondaire masquée via `meta.class` (`hidden md:table-cell`, classe Tailwind écrite en entier, jamais interpolée).

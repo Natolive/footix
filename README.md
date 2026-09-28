@@ -102,7 +102,14 @@ Tests back : `docker compose exec backend npm test` (unitaires), `docker compose
   `profile.update`) et change son mot de passe en redonnant l'actuel (`POST /auth/me/password`, droit
   `profile.change_password`, 10 essais / 15 min par IP) ; ses autres sessions sont déconnectées, pas celle-ci.
   L'email ne se change pas.
-- La liste des utilisateurs (`/settings/users`) montre si l'email est confirmé (`ManagedUserDto.emailVerified`).
+- La liste des utilisateurs (`/settings/users`) montre si l'email est confirmé (`ManagedUserDto.emailVerified`), le rôle,
+  les droits en plus et la date d'inscription (`ManagedUserDto.createdAt`). Tout se fait dans le navigateur sur la liste
+  complète (`GET /users`) :
+  - recherche : chaque mot tapé doit se trouver dans le prénom, le nom, l'email, le rôle, le statut de l'email, un droit
+    en plus ou la date, dans n'importe quel ordre ; accents, majuscules et ponctuation ignorés (« jean pierre » trouve
+    « Jean-Pierre », « oneil » trouve « O'Neil ») ;
+  - filtres : rôles (plusieurs), email confirmé ou en attente, avec ou sans droits en plus ;
+  - tri par colonne (à égalité, par nom), colonnes masquables, pagination de 10 à 100 lignes avec le total.
 - Supprimer un utilisateur (droit `users.delete`) efface aussi ses sessions, ses réponses et ses invités (cascade) ;
   jamais soi-même, et un super admin seulement par un super admin.
 - Jetons des liens stockés hachés (SHA-256), à usage unique ; un nouveau lien remplace le précédent.
