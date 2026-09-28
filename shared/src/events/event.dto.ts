@@ -1,17 +1,5 @@
-import { z } from 'zod'
-
-export interface ParticipantDto {
-  id: string
-  firstName: string
-  lastName: string
-}
-
-// Personne sans compte ramenée par un inscrit : elle prend une place.
-export interface GuestDto {
-  id: string
-  name: string
-  invitedBy: ParticipantDto
-}
+import type { GuestDto } from './guest.dto.ts'
+import type { ParticipantDto } from './participant.dto.ts'
 
 // Créneau tel que renvoyé par l'API, avec les réponses au sondage (visibles par tous).
 export interface EventDto {
@@ -29,41 +17,3 @@ export interface EventDto {
   declined: ParticipantDto[]
   guests: GuestDto[]
 }
-
-// Champ facultatif : vide, absent ou null devient null en base.
-const optional = <T extends z.ZodType<string>>(schema: T) =>
-  z.union([z.literal(''), schema]).nullish().transform((v) => v || null)
-
-export const eventSchema = z.object({
-  title: z.string('Donne un titre au créneau.').trim().min(1, 'Donne un titre au créneau, par exemple « Foot du jeudi ».').max(100, 'Raccourcis le titre à 100 caractères.'),
-  location: z.string('Indique le lieu.').trim().min(1, 'Indique le lieu, par exemple « Urban Soccer Lyon ».').max(200, 'Raccourcis le lieu à 200 caractères.'),
-  // Date envoyée en ISO par le front (le champ datetime-local est converti dans le fuseau du navigateur).
-  startsAt: z.coerce.date('Choisis la date et l’heure du match.').refine((d) => d > new Date(), 'Choisis une date à venir.'),
-  durationMinutes: z.coerce
-    .number('Indique la durée du match.')
-    .int('Indique une durée en minutes entières.')
-    .min(15, 'Prévois au moins 15 minutes.')
-    .max(480, 'Limite la durée à 8 h (480 minutes).'),
-  maxParticipants: z.coerce
-    .number('Indique le nombre de places.')
-    .int('Indique un nombre de places entier.')
-    .min(2, 'Prévois au moins 2 places.')
-    .max(100, 'Limite à 100 places.'),
-  // http(s) uniquement : le lien est affiché tel quel, pas de `javascript:`.
-  paymentUrl: optional(z.url({ protocol: /^https?$/, error: 'Colle un lien complet qui commence par https://.' })),
-  description: optional(z.string().trim().max(1000, 'Raccourcis la description à 1000 caractères.')),
-})
-export type EventInput = z.input<typeof eventSchema>
-export type SaveEventDto = z.infer<typeof eventSchema>
-
-// Réponse au sondage de la personne connectée : elle peut changer d'avis tant que le match n'a pas commencé.
-export const answerEventSchema = z.object({
-  attending: z.boolean('Réponds « je viens » ou « je ne viens pas ».'),
-})
-export type AnswerEventDto = z.infer<typeof answerEventSchema>
-
-// Invité : juste un nom, il n'a pas de compte.
-export const addGuestSchema = z.object({
-  name: z.string('Indique le nom de ton invité.').trim().min(1, 'Indique le nom de ton invité, par exemple « Paul ».').max(60, 'Raccourcis le nom à 60 caractères.'),
-})
-export type AddGuestDto = z.infer<typeof addGuestSchema>

@@ -1,10 +1,4 @@
-// HTML déjà sûr : inséré tel quel dans un autre `html\`\``.
-export class SafeHtml {
-  constructor(readonly value: string) {}
-  toString() {
-    return this.value;
-  }
-}
+import { SafeHtml } from './safe-html.js';
 
 const escape = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);

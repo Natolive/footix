@@ -9,24 +9,39 @@ import {
   type SaveEventDto,
   type UserDto,
 } from '@footix/shared';
-import { Authorize, CurrentUser } from '../../../auth/infrastructure/http/session.guard.js';
+import { Authorize } from '../../../auth/infrastructure/http/authorize.decorator.js';
+import { CurrentUser } from '../../../auth/infrastructure/http/current-user.decorator.js';
 import { ZodValidationPipe } from '../../../common/infrastructure/http/pipes/zod-validation.pipe.js';
-import { EventsService } from '../../application/events.service.js';
+import { AddGuestService } from '../../application/add-guest.service.js';
+import { AnswerEventService } from '../../application/answer-event.service.js';
+import { CreateEventService } from '../../application/create-event.service.js';
+import { DeleteEventService } from '../../application/delete-event.service.js';
+import { FindUpcomingEventsService } from '../../application/find-upcoming-events.service.js';
+import { RemoveGuestService } from '../../application/remove-guest.service.js';
+import { UpdateEventService } from '../../application/update-event.service.js';
 
 @Controller('events')
 export class EventsController {
-  constructor(private readonly events: EventsService) {}
+  constructor(
+    private readonly findUpcomingEventsService: FindUpcomingEventsService,
+    private readonly createEventService: CreateEventService,
+    private readonly updateEventService: UpdateEventService,
+    private readonly deleteEventService: DeleteEventService,
+    private readonly answerEventService: AnswerEventService,
+    private readonly addGuestService: AddGuestService,
+    private readonly removeGuestService: RemoveGuestService,
+  ) {}
 
   @Get()
   @Authorize('events.read')
   findAll(): Promise<EventDto[]> {
-    return this.events.findUpcoming();
+    return this.findUpcomingEventsService.execute();
   }
 
   @Post()
   @Authorize('planning.create_event')
   create(@Body(new ZodValidationPipe(eventSchema)) dto: SaveEventDto): Promise<EventDto> {
-    return this.events.createEvent(dto);
+    return this.createEventService.execute(dto);
   }
 
   @Put(':id')
@@ -35,14 +50,14 @@ export class EventsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodValidationPipe(eventSchema)) dto: SaveEventDto,
   ): Promise<EventDto> {
-    return this.events.updateEvent(id, dto);
+    return this.updateEventService.execute(id, dto);
   }
 
   @Delete(':id')
   @HttpCode(204)
   @Authorize('planning.delete_event')
   delete(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.events.deleteEvent(id);
+    return this.deleteEventService.execute(id);
   }
 
   // Réponse de la personne connectée au sondage : « je viens » ou « je ne viens pas ».
@@ -53,7 +68,7 @@ export class EventsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodValidationPipe(answerEventSchema)) dto: AnswerEventDto,
   ): Promise<EventDto> {
-    return this.events.answer(id, user, dto);
+    return this.answerEventService.execute(id, user, dto);
   }
 
   // Invité sans compte ramené par la personne connectée, qui doit venir elle-même.
@@ -64,7 +79,7 @@ export class EventsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodValidationPipe(addGuestSchema)) dto: AddGuestDto,
   ): Promise<EventDto> {
-    return this.events.addGuest(id, user.id, dto);
+    return this.addGuestService.execute(id, user.id, dto);
   }
 
   @Delete(':id/guests/:guestId')
@@ -74,6 +89,6 @@ export class EventsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Param('guestId', ParseUUIDPipe) guestId: string,
   ): Promise<EventDto> {
-    return this.events.removeGuest(id, guestId, user);
+    return this.removeGuestService.execute(id, guestId, user);
   }
 }

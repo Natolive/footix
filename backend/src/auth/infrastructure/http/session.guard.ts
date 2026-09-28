@@ -1,19 +1,18 @@
-import { CanActivate, createParamDecorator, ExecutionContext, Injectable, SetMetadata } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Permission } from '@footix/shared';
-import type { Request } from 'express';
-import { AuthService, type AuthenticatedUser } from '../../application/auth.service.js';
+import { AuthenticateService } from '../../application/authenticate.service.js';
+import { MissingPermissionError } from '../../domain/errors/missing-permission.error.js';
+import type { AuthenticatedRequest } from './authenticated-request.js';
 import { readSessionCookie } from './session-cookie.js';
 
-type AuthenticatedRequest = Request & { user: AuthenticatedUser };
-
-const PERMISSION = 'permission';
+export const PERMISSION = 'permission';
 
 // Guard global (APP_GUARD) : n'agit que sur les routes marquées `@Authorize`, les autres restent publiques.
 @Injectable()
 export class SessionGuard implements CanActivate {
   constructor(
-    private readonly auth: AuthService,
+    private readonly authenticate: AuthenticateService,
     private readonly reflector: Reflector,
   ) {}
 
@@ -21,15 +20,8 @@ export class SessionGuard implements CanActivate {
     const permission = this.reflector.get<Permission | undefined>(PERMISSION, context.getHandler());
     if (!permission) return true;
     const req = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    req.user = await this.auth.authenticate(readSessionCookie(req));
-    this.auth.authorize(req.user, permission);
+    req.user = await this.authenticate.execute(readSessionCookie(req));
+    if (!req.user.permissions.includes(permission)) throw new MissingPermissionError();
     return true;
   }
 }
-
-// Protège une route derrière un droit : `@Authorize('profile.read')`, puis `@CurrentUser() user` dans le handler.
-export const Authorize = (permission: Permission) => SetMetadata(PERMISSION, permission);
-
-export const CurrentUser = createParamDecorator(
-  (_: unknown, context: ExecutionContext) => context.switchToHttp().getRequest<AuthenticatedRequest>().user,
-);

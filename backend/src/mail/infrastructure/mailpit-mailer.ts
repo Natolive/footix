@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Mailer, type Mail } from '../domain/mailer.js';
+import type { Mail } from '../domain/mail.js';
+import { Mailer } from '../domain/mailer.js';
 
 // Dev : Mailpit garde les emails au lieu de les envoyer, lisibles sur http://mail.footix.localhost.
 // API d'envoi : https://mailpit.axllent.org/docs/api-v1/view.html#post-/api/v1/send

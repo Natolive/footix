@@ -3,7 +3,8 @@ import type { Role } from '@footix/shared';
 import { eq } from 'drizzle-orm';
 import { DB, type Database } from '../../common/infrastructure/database/database.module.js';
 import { DrizzleRepository } from '../../common/infrastructure/database/drizzle.repository.js';
-import type { NewRolePermission, RolePermission } from '../domain/role-permission.entity.js';
+import type { NewRolePermission } from '../domain/new-role-permission.entity.js';
+import type { RolePermission } from '../domain/role-permission.entity.js';
 import { RolePermissionRepository } from '../domain/role-permission.repository.js';
 import { rolePermissions } from './role-permission.table.js';
 

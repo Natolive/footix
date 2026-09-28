@@ -8,5 +8,3 @@ export interface RolePermission {
   granted: boolean;
   createdAt: Date;
 }
-
-export type NewRolePermission = Omit<RolePermission, 'id' | 'createdAt'>;

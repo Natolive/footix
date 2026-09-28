@@ -4,8 +4,8 @@
 - Tout passe par Docker (`docker compose exec <backend|frontend> ...`), jamais `npm` sur l'hôte (Node trop ancien).
 - Nouvelle dépendance : `docker compose exec <service> npm install <paquet>` puis `docker compose up -d --build -V`.
 - Workspace npm : `shared/` (DTO Zod), `backend/` (Nest, voir `backend/CLAUDE.md`), `frontend/` (Nuxt, voir `frontend/CLAUDE.md`), un seul lockfile à la racine.
-- Organiser par domaine en dossiers, jamais tout dans un fichier.
-- Un DTO = `shared/src/<domaine>/<nom>.dto.ts` (schéma + type inféré), réexporté dans `shared/src/index.ts`.
+- Organiser par domaine en dossiers, jamais tout dans un fichier : un fichier par service, DTO, type, erreur ou décorateur exporté.
+- Un DTO = `shared/src/<domaine>/<nom>.dto.ts` (un schéma + ses types inférés, ou une interface), réexporté dans `shared/src/index.ts`.
 - Dans `shared/` : imports relatifs en `.ts`, pas d'`enum`/`namespace` (chargé sans compilation).
 - La validation vit uniquement dans le schéma partagé, messages en français qui disent comment corriger.
 - Code en anglais, commentaires et textes d'interface en français.

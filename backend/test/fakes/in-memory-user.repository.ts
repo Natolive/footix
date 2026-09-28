@@ -1,4 +1,5 @@
-import type { NewUser, User } from '@src/users/domain/user.entity.js';
+import type { NewUser } from '@src/users/domain/new-user.entity.js';
+import type { User } from '@src/users/domain/user.entity.js';
 import { UserRepository } from '@src/users/domain/user.repository.js';
 import { InMemoryRepository } from './in-memory.repository.js';
 

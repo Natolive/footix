@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Mailer, type Mail } from '../domain/mailer.js';
+import type { Mail } from '../domain/mail.js';
+import { Mailer } from '../domain/mailer.js';
 
 // API transactionnelle de Brevo : https://developers.brevo.com/reference/sendtransacemail
 // MAIL_FROM doit être un expéditeur validé dans Brevo. Sans BREVO_API_KEY (CI), l'email est seulement loggé.

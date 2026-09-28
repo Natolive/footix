@@ -1,4 +1,5 @@
-import { Mailer, type Mail } from '@src/mail/domain/mailer.js';
+import type { Mail } from '@src/mail/domain/mail.js';
+import { Mailer } from '@src/mail/domain/mailer.js';
 
 // Garde les emails envoyés : les tests suivent le lien sans boîte mail.
 export class FakeMailer extends Mailer {

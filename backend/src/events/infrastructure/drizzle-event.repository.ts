@@ -3,7 +3,10 @@ import { and, asc, count, eq, gt, inArray, isNull } from 'drizzle-orm';
 import { DB, type Database } from '../../common/infrastructure/database/database.module.js';
 import { DrizzleRepository } from '../../common/infrastructure/database/drizzle.repository.js';
 import { users } from '../../users/infrastructure/user.table.js';
-import type { Event, Guest, NewEvent, Participant } from '../domain/event.entity.js';
+import type { Event } from '../domain/event.entity.js';
+import type { Guest } from '../domain/guest.entity.js';
+import type { NewEvent } from '../domain/new-event.entity.js';
+import type { Participant } from '../domain/participant.entity.js';
 import { EventRepository } from '../domain/event.repository.js';
 import { eventGuests, eventParticipants, events } from './event.table.js';
 

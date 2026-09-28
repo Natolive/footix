@@ -2,7 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, gt, ne } from 'drizzle-orm';
 import { DB, type Database } from '../../common/infrastructure/database/database.module.js';
 import { DrizzleRepository } from '../../common/infrastructure/database/drizzle.repository.js';
-import type { NewSession, Session } from '../domain/session.entity.js';
+import type { NewSession } from '../domain/new-session.entity.js';
+import type { Session } from '../domain/session.entity.js';
 import { SessionRepository } from '../domain/session.repository.js';
 import { sessions } from './session.table.js';
 

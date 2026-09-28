@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import { BaseRepository } from '../../domain/base.repository.js';
-import { ConflictError } from '../../domain/errors.js';
+import { ConflictError } from '../../domain/errors/conflict.error.js';
 import type { Database } from './database.module.js';
 
 type TableWithId = PgTable & { id: PgColumn };

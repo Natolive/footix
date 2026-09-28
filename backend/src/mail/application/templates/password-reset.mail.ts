@@ -1,4 +1,4 @@
-import type { Mail } from '../../domain/mailer.js';
+import type { Mail } from '../../domain/mail.js';
 import { html } from '../html.js';
 import { appUrl, button, layout, note, paragraph } from './layout.js';
 

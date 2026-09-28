@@ -3,5 +3,3 @@ export interface EmailDomain {
   domain: string;
   createdAt: Date;
 }
-
-export type NewEmailDomain = Pick<EmailDomain, 'domain'>;

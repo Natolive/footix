@@ -3,7 +3,11 @@
 - Hexagonal : `src/<domaine>/{domain,application,infrastructure}/` + `<domaine>.module.ts`, transverse dans `src/common/`.
 - `domain/` : entités, ports (classes abstraites) et erreurs métier, sans import Nest ni Drizzle.
 - Repository = port qui étend `BaseRepository` + adaptateur qui étend `DrizzleRepository`, liés dans le module (`{ provide: Port, useClass: Adapter }`).
-- Service CRUD = étend `BaseService` ; les services lèvent des erreurs métier (`NotFoundError`, `ConflictError`), jamais d'exception HTTP.
+- Un service par route : `application/<action>.service.ts`, classe `<Action>Service` avec une seule méthode `execute(...)`, injectée dans le controller et déclarée dans `providers` du module.
+- Logique partagée entre services : fonction dans son propre fichier (`findOpenEvent(repository, id)`, `hashToken`), ou service `@Injectable` interne s'il a des dépendances (`OpenSessionService`) ; un autre module l'utilise via `exports`.
+- Les services utilisent les repositories directement ; entité absente = `orThrow(await repo.findById(id), XxxNotFoundError)`.
+- Erreur métier = `domain/errors/<nom>.error.ts` (une classe par fichier, étend une erreur de `common/domain/errors/`), jamais d'exception HTTP.
+- Entité, type `NewXxx` et mapper vers DTO (`toXxxDto`) chacun dans son fichier de `domain/`.
 - Controllers dans `infrastructure/http/`, body validé par `ZodValidationPipe` avec un schéma `@footix/shared`.
 - Route protégée = `@Authorize('<catégorie>.<action>')`, vérifié par le guard global `SessionGuard` (401 sans session, 403 sans droit) ; sans décorateur, la route est publique ; `@CurrentUser()` donne la personne connectée.
 - Email = template `src/mail/application/templates/<nom>.mail.ts` (cadre `layout()`, valeurs via `html\`\`` échappées), envoyé par `mailer.send(...)` avec `MailModule` importé ; jamais de HTML ni d'appel Brevo ailleurs ; pièce jointe via `attachments`, agenda via `ics()`.
@@ -13,7 +17,7 @@
 - Après un changement de table : `docker compose exec backend npm run db:generate -- --name <nom>` (migrations appliquées au démarrage).
 - Imports relatifs en `.js` (ESM).
 - Tests hors de `src/`, dans `test/` : jamais de `*.spec.ts` à côté du code.
-- `test/unit/` reproduit l'arborescence de `src/` (`src/auth/application/auth.service.ts` → `test/unit/auth/application/auth.service.spec.ts`).
+- `test/unit/` reproduit l'arborescence de `src/` (`src/auth/application/login.service.ts` → `test/unit/auth/application/login.service.spec.ts`), un spec par service ; câblage commun des fakes dans `setup.ts` du dossier.
 - `test/e2e/*.e2e-spec.ts` : parcours HTTP complet (supertest) sur la vraie base, données créées avec un email unique et supprimées en `afterAll`.
 - `test/fakes/` : adaptateurs en mémoire partagés (`InMemoryRepository`, `InMemoryXxxRepository`, `FakePasswordHasher`, `FakeMailer` qui garde les emails et `lastToken()`), à réutiliser plutôt que des mocks.
 - Service testé en l'instanciant à la main avec des fakes, sans `Test.createTestingModule`.

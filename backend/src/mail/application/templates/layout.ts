@@ -1,4 +1,5 @@
-import { html, type SafeHtml } from '../html.js';
+import { html } from '../html.js';
+import type { SafeHtml } from '../safe-html.js';
 
 // Adresse du front, pour les liens des emails.
 export const appUrl = (path: string) => `${process.env.APP_URL}${path}`;

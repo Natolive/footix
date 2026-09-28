@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { emailField } from '../common/fields.ts'
+import { emailField } from '../common/email.field.ts'
 
 export const loginSchema = z.object({
   email: emailField,

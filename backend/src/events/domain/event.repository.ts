@@ -1,5 +1,8 @@
 import { BaseRepository } from '../../common/domain/base.repository.js';
-import type { Event, Guest, NewEvent, Participant } from './event.entity.js';
+import type { Event } from './event.entity.js';
+import type { Guest } from './guest.entity.js';
+import type { NewEvent } from './new-event.entity.js';
+import type { Participant } from './participant.entity.js';
 
 export abstract class EventRepository extends BaseRepository<Event, NewEvent> {
   // Créneaux pas encore commencés, du plus proche au plus lointain.

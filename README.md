@@ -17,21 +17,21 @@ docker compose up --build
 Espace de travail npm (un seul `package-lock.json` à la racine) :
 
 ```
-shared/     @footix/shared : schémas Zod + types (DTO) partagés front/back
-  src/common/   champs réutilisables (email, règles mot de passe)
-  src/auth/     login, signup, verify-email, password-reset (.dto.ts)
-  src/roles/    permissions.ts (droits, rôles, défauts), role.dto.ts
-  src/users/    user.dto.ts, managed-user.dto.ts, profile.dto.ts (son nom, son mot de passe),
-                availability.dto.ts (jours de la semaine où l'on peut jouer)
-  src/events/   event.dto.ts (créneau, réponse au sondage, invité)
-  src/email-domains/ email-domain.dto.ts (domaine autorisé à créer un compte)
+shared/     @footix/shared : schémas Zod + types (DTO) partagés front/back, un DTO par fichier
+  src/common/   champs réutilisables (email.field.ts, new-password.field.ts)
+  src/auth/     account, login, signup, verify-email, forgot-password, reset-password (.dto.ts)
+  src/roles/    permissions.ts (droits, rôles, défauts), role.dto.ts, update-role.dto.ts
+  src/users/    weekday.ts, user.dto.ts, update-profile, change-password, update-availability,
+                day-availability, managed-user, update-user, update-user-role, update-user-permissions (.dto.ts)
+  src/events/   event, participant, guest, save-event, answer-event, add-guest (.dto.ts)
+  src/email-domains/ email-domain.dto.ts, save-email-domain.dto.ts
 backend/    NestJS
   src/<domaine>/       auth, users, roles, events, email-domains ; architecture hexagonale :
-    domain/              entités, ports (classes abstraites), erreurs métier
-    application/         services (cas d'usage)
+    domain/              entités, ports (classes abstraites), mappers vers DTO, errors/ (une erreur par fichier)
+    application/         un service par cas d'usage (<action>.service.ts, méthode execute), appelé par le controller
     infrastructure/      adaptateurs : Drizzle, HTTP (controllers), etc.
   src/mail/            emails : port Mailer, templates (application/templates/), adaptateurs Brevo et Mailpit
-  src/common/          BaseRepository, BaseService, DrizzleRepository, DatabaseModule,
+  src/common/          BaseRepository, orThrow, DrizzleRepository, DatabaseModule,
                        DomainErrorFilter (erreur métier → HTTP), ZodValidationPipe, RateLimit
   drizzle/             migrations SQL (appliquées au démarrage)
 frontend/   Nuxt 4
@@ -49,10 +49,13 @@ frontend/   Nuxt 4
   app/types/
 ```
 
-Ajouter un DTO : créer `shared/src/<domaine>/<nom>.dto.ts` et l'exporter dans `shared/src/index.ts`
+Ajouter un DTO : créer `shared/src/<domaine>/<nom>.dto.ts` (un DTO par fichier) et l'exporter dans `shared/src/index.ts`
 (imports relatifs avec l'extension `.ts`, pas d'`enum`).
 
 Hot reload actif. Après ajout d'une dépendance : `docker compose up --build -V`.
+
+Éditeur (VS Code) : les dépendances ne vivent que dans Docker ; pour que l'éditeur les voie, les copier sur l'hôte
+(`node_modules` ignoré par git, à refaire après chaque nouvelle dépendance) : `docker compose cp backend:/repo/node_modules .`
 Tests back : `docker compose exec backend npm test` (unitaires), `docker compose exec backend npm run test:e2e` (e2e, vraie base).
 
 ## Créneaux

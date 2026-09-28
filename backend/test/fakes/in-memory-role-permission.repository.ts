@@ -1,5 +1,6 @@
 import type { Role } from '@footix/shared';
-import type { NewRolePermission, RolePermission } from '@src/roles/domain/role-permission.entity.js';
+import type { NewRolePermission } from '@src/roles/domain/new-role-permission.entity.js';
+import type { RolePermission } from '@src/roles/domain/role-permission.entity.js';
 import { RolePermissionRepository } from '@src/roles/domain/role-permission.repository.js';
 import { InMemoryRepository } from './in-memory.repository.js';
 

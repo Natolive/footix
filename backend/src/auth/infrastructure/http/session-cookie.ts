@@ -1,5 +1,5 @@
 import type { CookieOptions, Request, Response } from 'express';
-import type { OpenedSession } from '../../application/auth.service.js';
+import type { OpenedSession } from '../../application/opened-session.js';
 
 export const SESSION_COOKIE = 'footix_session';
 

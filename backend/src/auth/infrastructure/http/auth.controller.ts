@@ -19,23 +19,44 @@ import {
   type VerifyEmailDto,
 } from '@footix/shared';
 import type { Request, Response } from 'express';
-import { RateLimit } from '../../../common/infrastructure/http/rate-limit.guard.js';
 import { ZodValidationPipe } from '../../../common/infrastructure/http/pipes/zod-validation.pipe.js';
-import { AuthService } from '../../application/auth.service.js';
+import { RateLimit } from '../../../common/infrastructure/http/rate-limit.decorator.js';
+import { ChangePasswordService } from '../../application/change-password.service.js';
+import { CompleteOnboardingService } from '../../application/complete-onboarding.service.js';
+import { ForgotPasswordService } from '../../application/forgot-password.service.js';
+import { LoginService } from '../../application/login.service.js';
+import { LogoutService } from '../../application/logout.service.js';
+import { ResetPasswordService } from '../../application/reset-password.service.js';
+import { SignupService } from '../../application/signup.service.js';
+import { UpdateAvailabilityService } from '../../application/update-availability.service.js';
+import { UpdateProfileService } from '../../application/update-profile.service.js';
+import { VerifyEmailService } from '../../application/verify-email.service.js';
+import { Authorize } from './authorize.decorator.js';
+import { CurrentUser } from './current-user.decorator.js';
 import { clearSessionCookie, readSessionCookie, writeSessionCookie } from './session-cookie.js';
-import { Authorize, CurrentUser } from './session.guard.js';
 
 const MINUTE = 60 * 1000;
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly signupService: SignupService,
+    private readonly verifyEmailService: VerifyEmailService,
+    private readonly loginService: LoginService,
+    private readonly forgotPasswordService: ForgotPasswordService,
+    private readonly resetPasswordService: ResetPasswordService,
+    private readonly logoutService: LogoutService,
+    private readonly completeOnboardingService: CompleteOnboardingService,
+    private readonly updateProfileService: UpdateProfileService,
+    private readonly updateAvailabilityService: UpdateAvailabilityService,
+    private readonly changePasswordService: ChangePasswordService,
+  ) {}
 
   // Chaque inscription envoie un mail : protège la boîte visée et le quota Brevo.
   @Post('signup')
   @RateLimit({ by: 'email', limit: 3, windowMs: 60 * MINUTE }, { by: 'ip', limit: 30, windowMs: 60 * MINUTE })
   signup(@Body(new ZodValidationPipe(signupSchema)) dto: SignupDto): Promise<UserDto> {
-    return this.auth.signup(dto);
+    return this.signupService.execute(dto);
   }
 
   // Essais de mot de passe par qui a le lien : limite par IP (pas d'email dans le body).
@@ -46,7 +67,7 @@ export class AuthController {
     @Body(new ZodValidationPipe(verifyEmailSchema)) dto: VerifyEmailDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<UserDto> {
-    const session = await this.auth.verifyEmail(dto);
+    const session = await this.verifyEmailService.execute(dto);
     writeSessionCookie(res, session);
     return session.user;
   }
@@ -59,7 +80,7 @@ export class AuthController {
     @Body(new ZodValidationPipe(loginSchema)) dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<UserDto> {
-    const session = await this.auth.login(dto);
+    const session = await this.loginService.execute(dto);
     writeSessionCookie(res, session);
     return session.user;
   }
@@ -68,8 +89,8 @@ export class AuthController {
   @Post('forgot-password')
   @HttpCode(HttpStatus.NO_CONTENT)
   @RateLimit({ by: 'email', limit: 3, windowMs: 60 * MINUTE }, { by: 'ip', limit: 30, windowMs: 60 * MINUTE })
-  forgotPassword(@Body(new ZodValidationPipe(forgotPasswordSchema)) { email }: ForgotPasswordDto): Promise<void> {
-    return this.auth.forgotPassword(email);
+  forgotPassword(@Body(new ZodValidationPipe(forgotPasswordSchema)) dto: ForgotPasswordDto): Promise<void> {
+    return this.forgotPasswordService.execute(dto);
   }
 
   @Post('reset-password')
@@ -79,7 +100,7 @@ export class AuthController {
     @Body(new ZodValidationPipe(resetPasswordSchema)) dto: ResetPasswordDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<UserDto> {
-    const session = await this.auth.resetPassword(dto);
+    const session = await this.resetPasswordService.execute(dto);
     writeSessionCookie(res, session);
     return session.user;
   }
@@ -87,7 +108,7 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<void> {
-    await this.auth.logout(readSessionCookie(req));
+    await this.logoutService.execute(readSessionCookie(req));
     clearSessionCookie(res);
   }
 
@@ -95,7 +116,7 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @Authorize('profile.complete_onboarding')
   completeOnboarding(@CurrentUser() user: UserDto): Promise<void> {
-    return this.auth.completeOnboarding(user);
+    return this.completeOnboardingService.execute(user);
   }
 
   @Get('me')
@@ -107,7 +128,7 @@ export class AuthController {
   @Patch('me')
   @Authorize('profile.update')
   updateProfile(@CurrentUser() user: UserDto, @Body(new ZodValidationPipe(updateProfileSchema)) dto: UpdateProfileDto): Promise<UserDto> {
-    return this.auth.updateProfile(user, dto);
+    return this.updateProfileService.execute(user, dto);
   }
 
   @Put('me/availability')
@@ -116,7 +137,7 @@ export class AuthController {
     @CurrentUser() user: UserDto,
     @Body(new ZodValidationPipe(updateAvailabilitySchema)) dto: UpdateAvailabilityDto,
   ): Promise<UserDto> {
-    return this.auth.updateAvailability(user, dto);
+    return this.updateAvailabilityService.execute(user, dto);
   }
 
   // Essais du mot de passe actuel : limite par IP, comme les autres routes qui testent un mot de passe.
@@ -129,6 +150,6 @@ export class AuthController {
     @Req() req: Request,
     @Body(new ZodValidationPipe(changePasswordSchema)) dto: ChangePasswordDto,
   ): Promise<void> {
-    return this.auth.changePassword(user, readSessionCookie(req), dto);
+    return this.changePasswordService.execute(user, readSessionCookie(req), dto);
   }
 }

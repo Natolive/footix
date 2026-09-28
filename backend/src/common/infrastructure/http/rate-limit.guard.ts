@@ -1,40 +1,20 @@
-import { applyDecorators, CanActivate, ExecutionContext, Injectable, SetMetadata, UseGuards } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
-import { TooManyRequestsError } from '../../domain/errors.js';
+import { TooManyRequestsError } from '../../domain/errors/too-many-requests.error.js';
+import type { RateLimitRule } from './rate-limit-rule.js';
+import { RateLimiter } from './rate-limiter.js';
 
-// `email` : adresse du body (compte visé, boîte qui reçoit les mails) ; `ip` : appelant.
-export interface RateLimitRule {
-  by: 'email' | 'ip';
-  limit: number;
-  windowMs: number;
-}
-
-// Fenêtre fixe par clé : `limit` requêtes au plus par `windowMs`.
-// ponytail: en mémoire, par processus et remis à zéro au redémarrage ; passer par Redis si plusieurs instances de l'API.
-export class RateLimiter {
-  private readonly windows = new Map<string, { count: number; resetAt: number }>();
-
-  hit(key: string, { limit, windowMs }: RateLimitRule, now = Date.now()): boolean {
-    if (this.windows.size > 10_000) for (const [k, w] of this.windows) if (w.resetAt <= now) this.windows.delete(k);
-    const window = this.windows.get(key);
-    if (!window || window.resetAt <= now) {
-      this.windows.set(key, { count: 1, resetAt: now + windowMs });
-      return true;
-    }
-    return ++window.count <= limit;
-  }
-}
-
-const RULES = 'rate-limit';
+export const RATE_LIMIT_RULES = 'rate-limit';
 const limiter = new RateLimiter();
 
+// Posé par `@RateLimit(...)`, jamais à la main.
 @Injectable()
-class RateLimitGuard implements CanActivate {
+export class RateLimitGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const rules = this.reflector.get<RateLimitRule[]>(RULES, context.getHandler());
+    const rules = this.reflector.get<RateLimitRule[]>(RATE_LIMIT_RULES, context.getHandler());
     const req = context.switchToHttp().getRequest<Request>();
     // Guard avant la validation : body brut, normalisé comme `emailField`.
     const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
@@ -45,6 +25,3 @@ class RateLimitGuard implements CanActivate {
     return true;
   }
 }
-
-// Limite une route : `@RateLimit({ by: 'email', limit: 5, windowMs: HOUR })`.
-export const RateLimit = (...rules: RateLimitRule[]) => applyDecorators(SetMetadata(RULES, rules), UseGuards(RateLimitGuard));

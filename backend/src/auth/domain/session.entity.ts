@@ -6,5 +6,3 @@ export interface Session {
   expiresAt: Date;
   createdAt: Date;
 }
-
-export type NewSession = Omit<Session, 'id' | 'createdAt'>;

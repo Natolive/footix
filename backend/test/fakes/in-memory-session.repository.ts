@@ -1,4 +1,5 @@
-import type { NewSession, Session } from '@src/auth/domain/session.entity.js';
+import type { NewSession } from '@src/auth/domain/new-session.entity.js';
+import type { Session } from '@src/auth/domain/session.entity.js';
 import { SessionRepository } from '@src/auth/domain/session.repository.js';
 import { InMemoryRepository } from './in-memory.repository.js';
 

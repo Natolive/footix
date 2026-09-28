@@ -1,4 +1,5 @@
-import type { Event, NewEvent } from '@src/events/domain/event.entity.js';
+import type { Event } from '@src/events/domain/event.entity.js';
+import type { NewEvent } from '@src/events/domain/new-event.entity.js';
 import { EventRepository } from '@src/events/domain/event.repository.js';
 import { InMemoryRepository } from './in-memory.repository.js';
 import type { InMemoryUserRepository } from './in-memory-user.repository.js';

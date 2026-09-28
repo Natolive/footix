@@ -1,4 +1,5 @@
 // Fichier calendrier (RFC 5545) d'un seul événement, joint aux emails.
+import type { CalendarEvent } from './calendar-event.js';
 
 // Échappement des valeurs texte : \ ; , et retours à la ligne.
 const text = (s: string) => s.replace(/[\;,]/g, (c) => `\\${c}`).replace(/\r?\n/g, '\\n');
@@ -19,16 +20,6 @@ const fold = (line: string) => {
   }
   return [...out, current].join('\r\n ');
 };
-
-export interface CalendarEvent {
-  uid: string;
-  title: string;
-  description: string | null;
-  location: string;
-  startsAt: Date;
-  endsAt: Date;
-  url: string;
-}
 
 export const ics = ({ uid, title, description, location, startsAt, endsAt, url }: CalendarEvent): string =>
   [
