@@ -9,5 +9,7 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['test/unit/**/*.spec.ts'],
+    // `npm run test:cov` : tout `src/`, même les fichiers qu'aucun test n'importe (badge du README).
+    coverage: { include: ['src/**/*.ts'], reporter: ['text-summary', 'json-summary'] },
   },
 });

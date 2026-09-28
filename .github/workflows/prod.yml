@@ -33,8 +33,44 @@ jobs:
       - uses: actions/checkout@v4
       - run: npm ci
       - run: npm run db:migrate -w backend
-      - run: npm test -w backend
+      # Tests unitaires avec couverture : leurs chiffres alimentent les badges du README.
+      - run: npm run test:cov -w backend -- --reporter=default --reporter=json --outputFile.json=coverage/tests.json
       - run: npm run test:e2e -w backend
+      - name: Données des badges (format endpoint de shields.io)
+        run: |
+          mkdir -p badges
+          node -e '
+            const fs = require("fs");
+            const pct = require("./backend/coverage/coverage-summary.json").total.lines.pct;
+            const { numPassedTests } = require("./backend/coverage/tests.json");
+            const badge = (name, label, message, color) =>
+              fs.writeFileSync(`badges/${name}.json`, JSON.stringify({ schemaVersion: 1, label, message, color }));
+            badge("coverage", "coverage", `${pct}%`, pct >= 90 ? "brightgreen" : pct >= 75 ? "green" : pct >= 60 ? "yellow" : "orange");
+            badge("tests", "tests", `${numPassedTests} passed`, "brightgreen");
+          '
+      - uses: actions/upload-artifact@v4
+        with:
+          name: badges
+          path: badges
+
+  # Branche `badges` réécrite à chaque push (un seul commit) : shields.io lit ses JSON, sans service externe.
+  badges:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: badges
+          path: badges
+      - name: Publier sur la branche badges
+        working-directory: badges
+        run: |
+          git init -q -b badges
+          git add .
+          git -c user.name=github-actions -c user.email=github-actions@users.noreply.github.com commit -qm "Badges de ${{ github.sha }}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" badges
 
   image:
     needs: test

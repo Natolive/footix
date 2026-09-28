@@ -1,5 +1,17 @@
 # Footix
 
+[![Prod](https://github.com/Natolive/footix/actions/workflows/prod.yml/badge.svg?branch=main)](https://github.com/Natolive/footix/actions/workflows/prod.yml)
+[![Tests](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Natolive/footix/badges/tests.json)](https://github.com/Natolive/footix/actions/workflows/prod.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Natolive/footix/badges/coverage.json)](https://github.com/Natolive/footix/actions/workflows/prod.yml)
+[![Dernier commit](https://img.shields.io/github/last-commit/Natolive/footix/main)](https://github.com/Natolive/footix/commits/main)
+[![NestJS](https://img.shields.io/github/package-json/dependency-version/Natolive/footix/@nestjs/core?filename=backend/package.json&label=NestJS&logo=nestjs)](https://nestjs.com)
+[![Nuxt](https://img.shields.io/github/package-json/dependency-version/Natolive/footix/nuxt?filename=frontend/package.json&label=Nuxt&logo=nuxt)](https://nuxt.com)
+[![TypeScript](https://img.shields.io/github/package-json/dependency-version/Natolive/footix/dev/typescript?filename=backend/package.json&label=TypeScript&logo=typescript)](https://www.typescriptlang.org)
+[![Zod](https://img.shields.io/github/package-json/dependency-version/Natolive/footix/zod?filename=shared/package.json&label=Zod&logo=zod)](https://zod.dev)
+[![Drizzle](https://img.shields.io/github/package-json/dependency-version/Natolive/footix/drizzle-orm?filename=backend/package.json&label=Drizzle&logo=drizzle)](https://orm.drizzle.team)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-latest-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![Docker](https://img.shields.io/badge/Docker-compose-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
+
 Appli pour s'inscrire aux créneaux de foot proposés par la boîte.
 
 ```bash
@@ -57,6 +69,7 @@ Hot reload actif. Après ajout d'une dépendance : `docker compose up --build -V
 Éditeur (VS Code) : les dépendances ne vivent que dans Docker ; pour que l'éditeur les voie, les copier sur l'hôte
 (`node_modules` ignoré par git, à refaire après chaque nouvelle dépendance) : `docker compose cp backend:/repo/node_modules .`
 Tests back : `docker compose exec backend npm test` (unitaires), `docker compose exec backend npm run test:e2e` (e2e, vraie base).
+Couverture des unitaires sur tout `src/` : `docker compose exec backend npm run test:cov`.
 
 ## Créneaux
 
@@ -144,7 +157,9 @@ HTTPS assuré par Caddy sur le serveur (`/etc/caddy/Caddyfile` : `foot.benit.ooo
 
 À chaque push sur `main`, `.github/workflows/prod.yml` lance les tests, publie l'image sur
 `ghcr.io/natolive/footix` (tags `latest` et commit), copie `docker-compose.prod.yml` sur le serveur puis y fait
-`docker compose pull && up -d`, puis supprime les anciennes images footix (seule celle en service reste). Le serveur ne contient que `~/footix/{docker-compose.prod.yml,.env}` : ni code, ni build.
+`docker compose pull && up -d`, puis supprime les anciennes images footix (seule celle en service reste).
+En parallèle, le job `badges` réécrit la branche `badges` (un seul commit) avec le nombre de tests et la couverture
+des unitaires, lus par shields.io pour les badges en tête du README. Le serveur ne contient que `~/footix/{docker-compose.prod.yml,.env}` : ni code, ni build.
 Migrations appliquées au démarrage de l'API, base et API non exposées.
 
 Mise en place, une fois :
