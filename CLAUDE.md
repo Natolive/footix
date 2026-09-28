@@ -23,3 +23,11 @@
 - Droit supprimé ou renommé = migration qui nettoie `role_permissions` et `users.extra_permissions`.
 - Règles vérifiées côté API et reprises à l'écran : seul un super admin touche à un super admin ; personne ne modifie son propre rôle ni ses droits, ni ne supprime son propre compte.
 - Premier super admin : `UPDATE users SET role = 'super_admin' WHERE email = '…'` (pas d'écran).
+
+## Avant de dire « fini » ou de commit
+
+- `README.md` à jour dès qu'un comportement visible change : règle métier → section du domaine (Créneaux, Comptes…), CI ou serveur → Production.
+- Nouvelle règle de code ou nouvelle convention → le `CLAUDE.md` concerné (racine, `backend/`, `frontend/`).
+- Règle métier back = test unitaire du service ; `docker compose exec backend npm test` vert avant de commit.
+- Commit en français, une ligne qui dit ce qui change pour l'utilisateur.
+- Push sur `main` = déploiement en prod : seulement sur demande ; `[skip ci]` dans le message si seuls docs ou commentaires changent.
