@@ -1,4 +1,6 @@
+import { Logger } from '@nestjs/common';
 import { EventFullError } from '@src/events/domain/errors/event-full.error.js';
+import { EventNotFoundError } from '@src/events/domain/errors/event-not-found.error.js';
 import { EventStartedError } from '@src/events/domain/errors/event-started.error.js';
 import { match, no, setupEvents, yes } from './setup.js';
 
@@ -40,6 +42,21 @@ describe('AnswerEventService', () => {
     // Fin du match = début + durée du créneau (90 min).
     const end = new Date(Date.parse(startsAt) + 90 * 60_000).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
     expect(events.mailer.sent[0].attachments![0].content).toContain(`DTEND:${end}`);
+  });
+
+  it('keeps the place and logs the failure when the confirmation email fails', async () => {
+    const logError = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
+    const [lea] = await events.people('Léa');
+    const { id } = await events.create.execute(match(1));
+    events.mailer.failing = true;
+    expect((await events.answer.execute(id, lea, yes)).participants).toEqual([expect.objectContaining({ id: lea.id })]);
+    expect(logError).toHaveBeenCalledWith('Confirmation non envoyée à Léa@solem.fr', expect.any(Error));
+    logError.mockRestore();
+  });
+
+  it('refuses an unknown event', async () => {
+    const [lea] = await events.people('Léa');
+    await expect(events.answer.execute('unknown', lea, yes)).rejects.toBeInstanceOf(EventNotFoundError);
   });
 
   it('closes registrations once the event has started', async () => {

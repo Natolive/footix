@@ -1,3 +1,4 @@
+import { EventNotFoundError } from '@src/events/domain/errors/event-not-found.error.js';
 import { TooFewPlacesError } from '@src/events/domain/errors/too-few-places.error.js';
 import { match, no, setupEvents, yes } from './setup.js';
 
@@ -11,6 +12,10 @@ describe('UpdateEventService', () => {
     await events.answer.execute(id, tom, no);
     await expect(events.update.execute(id, match(1, 1))).rejects.toBeInstanceOf(TooFewPlacesError);
     expect(await events.update.execute(id, { ...match(2, 2), location: 'Five' })).toMatchObject({ location: 'Five', maxParticipants: 2 });
+  });
+
+  it('refuses an unknown event', async () => {
+    await expect(setupEvents().update.execute('unknown', match(1))).rejects.toBeInstanceOf(EventNotFoundError);
   });
 
   it('counts guests among the places taken', async () => {

@@ -45,8 +45,12 @@ describe('Auth (e2e)', () => {
     await http.post('/auth/signup').send(account).expect(409);
     await http.post('/auth/login').send({ email, password: 'wrong-password' }).expect(401);
 
+    // Sans « Rester connecté » : cookie de session, effacé à la fermeture du navigateur ; avec, il a une date d'expiration.
+    const remembered = await http.post('/auth/login').send({ email, password: account.password, remember: true }).expect(200);
+    expect(remembered.headers['set-cookie']?.[0]).toMatch(/Expires=/);
     const login = await http.post('/auth/login').send({ email, password: account.password }).expect(200);
     expect(login.headers['set-cookie']?.[0]).toMatch(/footix_session=.+HttpOnly/);
+    expect(login.headers['set-cookie']?.[0]).not.toMatch(/Expires=/);
 
     const me = await http.get('/auth/me').expect(200);
     expect(me.body).toEqual({ id: expect.any(String), email, firstName: 'Léa', lastName: 'Dupont', role: 'user', onboarded: false, availableDays: [], permissions: ['profile.read', 'profile.update', 'profile.change_password', 'profile.update_availability', 'profile.complete_onboarding', 'events.read', 'events.participate', 'events.invite_guest'] });
@@ -76,12 +80,16 @@ describe('Auth (e2e)', () => {
     expect(domains.body).toContainEqual({ id: expect.any(String), domain: 'solem.fr' });
     await http.post('/email-domains').send({ domain: '@solem' }).expect(400);
     await http.post('/email-domains').send({ domain: 'Solem.fr' }).expect(409);
+    const { body: added } = await http.post('/email-domains').send({ domain: `e2e-${Date.now()}.fr` }).expect(201);
+    await http.delete(`/email-domains/${added.id}`).expect(204);
+    await http.delete(`/email-domains/${added.id}`).expect(404);
 
     const availability = await http.get('/users/availability').expect(200);
     expect(availability.body.find((d: { day: string }) => d.day === 'monday').people).toContainEqual({ id: me.body.id, firstName: 'Léna', lastName: 'Martin' });
     const list = await http.get('/users').expect(200);
     expect(list.body).toContainEqual(expect.objectContaining({ email, role: 'super_admin', extraPermissions: [], emailVerified: true }));
     await http.put(`/users/${me.body.id}/role`).send({ role: 'user' }).expect(403);
+    await http.put(`/users/${me.body.id}/permissions`).send({ extraPermissions: [] }).expect(403);
     await http.patch(`/users/${me.body.id}`).send({ email, firstName: 'Léo', lastName: 'Dupont' }).expect(200);
     await http.delete(`/users/${me.body.id}`).expect(403);
 

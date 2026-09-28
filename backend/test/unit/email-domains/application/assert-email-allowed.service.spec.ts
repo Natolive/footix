@@ -18,6 +18,7 @@ describe('AssertEmailAllowedService', () => {
     await expect(assertAllowed.execute('lea@solem.fr')).resolves.toBeUndefined();
     await expect(assertAllowed.execute('lea@gmail.com')).rejects.toThrow('@solem.fr');
     await expect(assertAllowed.execute('lea@sub.solem.fr')).rejects.toBeInstanceOf(EmailDomainNotAllowedError);
+    await expect(assertAllowed.execute('solem.fr')).rejects.toBeInstanceOf(EmailDomainNotAllowedError);
   });
 
   it('closes signups once every domain is removed', async () => {

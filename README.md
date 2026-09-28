@@ -68,8 +68,10 @@ Hot reload actif. Après ajout d'une dépendance : `docker compose up --build -V
 
 Éditeur (VS Code) : les dépendances ne vivent que dans Docker ; pour que l'éditeur les voie, les copier sur l'hôte
 (`node_modules` ignoré par git, à refaire après chaque nouvelle dépendance) : `docker compose cp backend:/repo/node_modules .`
-Tests back : `docker compose exec backend npm test` (unitaires), `docker compose exec backend npm run test:e2e` (e2e, vraie base).
-Couverture des unitaires sur tout `src/` : `docker compose exec backend npm run test:cov`.
+Tests back : `docker compose exec backend npm test` (unitaires), `docker compose exec backend npm run test:e2e`
+(e2e HTTP et intégration des adaptateurs Drizzle, vraie base). `docker compose exec backend npm run test:cov` lance tout et
+exige 100 % des lignes, instructions et fonctions de `src/` (hors `main.ts` et tables Drizzle) ; seules les branches
+ajoutées par le compilateur aux décorateurs Nest (métadonnées d'injection) ne sont jamais prises.
 
 ## Créneaux
 
@@ -159,7 +161,7 @@ HTTPS assuré par Caddy sur le serveur (`/etc/caddy/Caddyfile` : `foot.benit.ooo
 `ghcr.io/natolive/footix` (tags `latest` et commit), copie `docker-compose.prod.yml` sur le serveur puis y fait
 `docker compose pull && up -d`, puis supprime les anciennes images footix (seule celle en service reste).
 En parallèle, le job `badges` réécrit la branche `badges` (un seul commit) avec le nombre de tests et la couverture
-des unitaires, lus par shields.io pour les badges en tête du README. Le serveur ne contient que `~/footix/{docker-compose.prod.yml,.env}` : ni code, ni build.
+(unitaires + e2e + intégration), lus par shields.io pour les badges en tête du README. Le serveur ne contient que `~/footix/{docker-compose.prod.yml,.env}` : ni code, ni build.
 Migrations appliquées au démarrage de l'API, base et API non exposées.
 
 Mise en place, une fois :

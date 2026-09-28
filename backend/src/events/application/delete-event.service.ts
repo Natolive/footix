@@ -18,7 +18,7 @@ export class DeleteEventService {
   async execute(id: string): Promise<void> {
     const event = orThrow(await this.events.findById(id), EventNotFoundError);
     const participants = await this.events.findParticipants([id]);
-    if (!(await this.events.delete(id))) throw new EventNotFoundError();
+    await this.events.delete(id);
     if (event.startsAt <= new Date()) return;
     // ponytail: email perdu s'il échoue (pas de renvoi), la suppression reste faite.
     await Promise.all(

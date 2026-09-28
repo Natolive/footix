@@ -19,8 +19,10 @@
 - Tests hors de `src/`, dans `test/` : jamais de `*.spec.ts` à côté du code.
 - `test/unit/` reproduit l'arborescence de `src/` (`src/auth/application/login.service.ts` → `test/unit/auth/application/login.service.spec.ts`), un spec par service ; câblage commun des fakes dans `setup.ts` du dossier.
 - `test/e2e/*.e2e-spec.ts` : parcours HTTP complet (supertest) sur la vraie base, données créées avec un email unique et supprimées en `afterAll`.
-- `test/fakes/` : adaptateurs en mémoire partagés (`InMemoryRepository`, `InMemoryXxxRepository`, `FakePasswordHasher`, `FakeMailer` qui garde les emails et `lastToken()`), à réutiliser plutôt que des mocks.
+- `test/integration/**/*.int-spec.ts` : adaptateurs Drizzle testés directement sur la vraie base (connexion `connect()` de `test/integration/database.ts`), même arborescence que `src/`, données uniques supprimées en `afterAll` ; ce qui est partagé (droits des rôles) garde les droits effectifs et est remis à la fin.
+- Couverture : `npm run test:cov` (unitaires + e2e + intégration) exige 100 % des lignes, instructions et fonctions ; seules les branches générées par les décorateurs Nest restent non couvertes. Nouveau code = son test dans la couche qui convient (service → unitaire, adaptateur → intégration, route → e2e), jamais une exclusion de couverture.
+- `test/fakes/` : adaptateurs en mémoire partagés (`InMemoryRepository`, `InMemoryXxxRepository`, `FakePasswordHasher`, `FakeMailer` qui garde les emails, `lastToken()` et `failing` pour simuler une panne), à réutiliser plutôt que des mocks.
 - Service testé en l'instanciant à la main avec des fakes, sans `Test.createTestingModule`.
 - Nouveau repository = son `InMemoryXxxRepository` dans `test/fakes/`, qui étend `InMemoryRepository`.
 - Imports des tests via les alias `@src/*` et `@test/*`, réservés aux tests.
-- Lancer : `docker compose exec backend npm test` (unitaires), `docker compose exec backend npm run test:e2e` (e2e).
+- Lancer : `docker compose exec backend npm test` (unitaires), `docker compose exec backend npm run test:e2e` (e2e et intégration), `docker compose exec backend npm run test:cov` (tout, avec couverture).

@@ -2,7 +2,7 @@
 import type { CalendarEvent } from './calendar-event.js';
 
 // Échappement des valeurs texte : \ ; , et retours à la ligne.
-const text = (s: string) => s.replace(/[\;,]/g, (c) => `\\${c}`).replace(/\r?\n/g, '\\n');
+const text = (s: string) => s.replace(/[;,]/g, (c) => `\\${c}`).replace(/\r?\n/g, '\\n');
 
 // 20260925T180000Z
 const utc = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');

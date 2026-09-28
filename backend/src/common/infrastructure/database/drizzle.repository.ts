@@ -55,8 +55,9 @@ export abstract class DrizzleRepository<TTable extends TableWithId, TEntity, TCr
   }
 
   // Violation d'unicité (ex. deux inscriptions simultanées) : erreur métier plutôt qu'une 500.
+  // Drizzle enveloppe l'erreur de Postgres dans `cause`.
   protected translate(e: unknown): unknown {
-    const code = (e as { cause?: { code?: string } }).cause?.code ?? (e as { code?: string }).code;
+    const code = (e as { cause?: { code?: string } }).cause?.code;
     return code === UNIQUE_VIOLATION ? new ConflictError('Cette ressource existe déjà.') : e;
   }
 }

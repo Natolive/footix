@@ -1,6 +1,7 @@
 import { UpdateUserService } from '@src/users/application/update-user.service.js';
 import { EmailAlreadyUsedError } from '@src/users/domain/errors/email-already-used.error.js';
 import { SuperAdminOnlyError } from '@src/users/domain/errors/super-admin-only.error.js';
+import { UserNotFoundError } from '@src/users/domain/errors/user-not-found.error.js';
 import { person, setupUsers } from './setup.js';
 
 describe('UpdateUserService', () => {
@@ -25,5 +26,10 @@ describe('UpdateUserService', () => {
   it('leaves a super admin to super admins', async () => {
     const { users, admin, manager } = await setupUsers();
     await expect(new UpdateUserService(users).execute(manager, admin.id, person('admin@solem.fr'))).rejects.toBeInstanceOf(SuperAdminOnlyError);
+  });
+
+  it('refuses an unknown user', async () => {
+    const { users, admin } = await setupUsers();
+    await expect(new UpdateUserService(users).execute(admin, 'unknown', person('nobody@solem.fr'))).rejects.toBeInstanceOf(UserNotFoundError);
   });
 });

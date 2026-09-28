@@ -4,6 +4,7 @@ import { AppModule } from '@src/app.module.js';
 import { DB, type Database } from '@src/common/infrastructure/database/database.module.js';
 import { users } from '@src/users/infrastructure/user.table.js';
 import { eq, inArray } from 'drizzle-orm';
+import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 
 // Organisation puis inscriptions sur la vraie base, verrou compris.
@@ -51,6 +52,9 @@ describe('Events (e2e)', () => {
     await orga.post('/events').send({ ...event, paymentUrl: 'javascript:alert(1)' }).expect(400);
     const { body: created } = await orga.post('/events').send(event).expect(201);
     expect(created).toMatchObject({ paymentUrl: null, description: null, participants: [] });
+    await orga.put(`/events/${randomUUID()}`).send(event).expect(404);
+    const { body: moved } = await orga.put(`/events/${created.id}`).send({ ...event, location: 'Five' }).expect(200);
+    expect(moved).toMatchObject({ id: created.id, location: 'Five' });
 
     const answer = (http: typeof orga, attending: unknown) => http.put(`/events/${created.id}/participation`).send({ attending });
     await answer(lea, 'oui').expect(400);
@@ -64,6 +68,8 @@ describe('Events (e2e)', () => {
     await answer(max, false).expect(200);
     await answer(lea, true).expect(200);
     await lea.post(`/events/${created.id}/guests`).send({ name: '' }).expect(400);
+    await max.post(`/events/${created.id}/guests`).send({ name: 'Paul' }).expect(409);
+    await orga.put(`/events/${created.id}`).send({ ...event, maxParticipants: 2 }).expect(200);
     const { body: withGuest } = await lea.post(`/events/${created.id}/guests`).send({ name: 'Paul' }).expect(201);
     expect(withGuest.guests).toEqual([expect.objectContaining({ name: 'Paul' })]);
     await answer(max, true).expect(409);
@@ -76,6 +82,10 @@ describe('Events (e2e)', () => {
     await lea.post(`/events/${created.id}/guests`).send({ name: 'Paul' }).expect(201);
     const { body: leaMe } = await lea.get('/auth/me').expect(200);
     await db.update(users).set({ role: 'super_admin' }).where(eq(users.email, emails[0]));
+    const { body: maxMe } = await max.get('/auth/me').expect(200);
+    const { body: promoted } = await orga.put(`/users/${maxMe.id}/permissions`).send({ extraPermissions: ['users.read'] }).expect(200);
+    expect(promoted.extraPermissions).toEqual(['users.read']);
+    await max.get('/users').expect(200);
     await orga.delete(`/users/${leaMe.id}`).expect(204);
     const after = (await orga.get('/events').expect(200)).body.find((e: { id: string }) => e.id === created.id);
     expect(after).toMatchObject({ participants: [], guests: [] });
