@@ -10,6 +10,16 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "grep -q '\"stop_hook_active\": *true' || [ -z \"$(git -C \"$CLAUDE_PROJECT_DIR\" status --porcelain)\" ] || echo '{\"decision\":\"block\",\"reason\":\"Des changements ne sont pas commités : avant de dire « fini », vérifier la section « Avant de dire « fini » ou de commit » du CLAUDE.md racine (README, CLAUDE.md, tests), puis répondre.\"}'"
+          }
+        ]
+      }
     ]
   }
 }
