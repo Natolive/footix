@@ -86,8 +86,10 @@ describe('Auth (e2e)', () => {
 
     const availability = await http.get('/users/availability').expect(200);
     expect(availability.body.find((d: { day: string }) => d.day === 'monday').people).toContainEqual({ id: me.body.id, firstName: 'Léna', lastName: 'Martin' });
-    const list = await http.get('/users').expect(200);
-    expect(list.body).toContainEqual(expect.objectContaining({ email, role: 'super_admin', extraPermissions: [], emailVerified: true }));
+    await http.get('/users?pageSize=7').expect(400);
+    const list = await http.get('/users').query({ q: 'léna martin', roles: 'super_admin', emailVerified: 'verified' }).expect(200);
+    expect(list.body.page).toBe(1);
+    expect(list.body.items).toContainEqual(expect.objectContaining({ email, role: 'super_admin', extraPermissions: [], emailVerified: true }));
     await http.put(`/users/${me.body.id}/role`).send({ role: 'user' }).expect(403);
     await http.put(`/users/${me.body.id}/permissions`).send({ extraPermissions: [] }).expect(403);
     await http.patch(`/users/${me.body.id}`).send({ email, firstName: 'Léo', lastName: 'Dupont' }).expect(200);

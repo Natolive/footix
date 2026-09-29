@@ -64,6 +64,13 @@
       "when": 1790663456783,
       "tag": "0008_add_event_cancelled_at",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790665277734,
+      "tag": "0009_enable_unaccent",
+      "breakpoints": true
     }
   ]
 }

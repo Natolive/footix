@@ -1,6 +1,8 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Put, Query } from '@nestjs/common';
 import {
   type DayAvailabilityDto,
+  findUsersQuerySchema,
+  type FindUsersQuery,
   updateUserPermissionsSchema,
   updateUserRoleSchema,
   updateUserSchema,
@@ -9,6 +11,7 @@ import {
   type UpdateUserPermissionsDto,
   type UpdateUserRoleDto,
   type UserDto,
+  type UserPageDto,
 } from '@footix/shared';
 import { Authorize } from '../../../auth/infrastructure/http/authorize.decorator.js';
 import { CurrentUser } from '../../../auth/infrastructure/http/current-user.decorator.js';
@@ -33,8 +36,8 @@ export class UsersController {
 
   @Get()
   @Authorize('users.read')
-  findAll(): Promise<ManagedUserDto[]> {
-    return this.findUsersService.execute();
+  findAll(@Query(new ZodValidationPipe(findUsersQuerySchema)) query: FindUsersQuery): Promise<UserPageDto> {
+    return this.findUsersService.execute(query);
   }
 
   @Get('availability')

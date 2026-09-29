@@ -7,12 +7,16 @@ import {
   updateUserPermissionsSchema,
   updateUserRoleSchema,
   updateUserSchema,
+  USER_PAGE_SIZES,
+  type FindUsersQuery,
   type ManagedUserDto,
   type Permission,
   type Role,
   type UpdateUserDto,
   type UpdateUserPermissionsDto,
   type UpdateUserRoleDto,
+  type UserPageDto,
+  type UserSort,
 } from '@footix/shared'
 import type { FormFieldConfig } from '~/types/form'
 
@@ -24,11 +28,6 @@ const toast = useToast()
 const { user: me, fetchUser } = useAuth()
 const can = (p: Permission) => !!me.value?.permissions.includes(p)
 const isSuperAdmin = computed(() => me.value?.role === 'super_admin')
-
-const { data: users } = await useAsyncData('users', () => api<ManagedUserDto[]>('/users'), { default: () => [] })
-
-// ponytail: recherche, filtres, tri et pagination dans le navigateur (la liste entière est chargée) ;
-// à passer côté API (`?q=&page=`) si la boîte dépasse quelques milliers de comptes.
 
 // En-tête cliquable : croissant, décroissant, puis ordre par défaut (nom).
 const UButton = resolveComponent('UButton')
@@ -94,41 +93,8 @@ const extraItems = [
   { value: 'without', label: 'Sans droit en plus' },
 ]
 
-// Sans accents, majuscules ni ponctuation : « Hélène », « helene », « O'Neil » et « oneil » se valent,
-// « jean pierre » trouve « Jean-Pierre ».
-const fold = (text: string) => text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
-const squash = (text: string) => fold(text).replace(/[^\p{L}\p{N}@.]/gu, '')
-// Tout ce qu'on voit sur une ligne est cherchable ; chaque mot tapé doit se trouver quelque part, dans n'importe quel ordre.
-const haystack = (u: ManagedUserDto) =>
-  [
-    u.firstName,
-    u.lastName,
-    u.email,
-    ROLE_LABELS[u.role],
-    u.emailVerified ? 'confirmé' : 'en attente',
-    ...u.extraPermissions.map((p) => PERMISSION_LABELS[p]),
-    formatDate(u.createdAt),
-  ]
-    .map(squash)
-    .join(' ')
-const index = computed(() => new Map(users.value.map((u) => [u.id, haystack(u)])))
-const terms = computed(() => search.value.split(/\s+/).map(squash).filter(Boolean))
-
-const filtered = computed(() =>
-  users.value.filter(
-    (u) =>
-      terms.value.every((t) => index.value.get(u.id)!.includes(t)) &&
-      (!roleFilter.value.length || roleFilter.value.includes(u.role)) &&
-      (statusFilter.value === 'all' || u.emailVerified === (statusFilter.value === 'verified')) &&
-      (extraFilter.value === 'all' || !!u.extraPermissions.length === (extraFilter.value === 'with')),
-  ),
-)
 const filtering = computed(
-  () =>
-    !!terms.value.length ||
-    !!roleFilter.value.length ||
-    statusFilter.value !== 'all' ||
-    extraFilter.value !== 'all',
+  () => !!search.value.trim() || !!roleFilter.value.length || statusFilter.value !== 'all' || extraFilter.value !== 'all',
 )
 function resetFilters() {
   search.value = ''
@@ -137,40 +103,39 @@ function resetFilters() {
   extraFilter.value = 'all'
 }
 
-// Tri : le tableau ne fait qu'afficher l'état (`manualSorting`), le tri se fait ici, avant la pagination.
-const sorting = ref<{ id: string; desc: boolean }[]>([])
-const text = (a: string, b: string) => a.localeCompare(b, 'fr', { sensitivity: 'base' })
-const byName = (a: ManagedUserDto, b: ManagedUserDto) => text(a.lastName, b.lastName) || text(a.firstName, b.firstName)
-const comparators: Record<string, (a: ManagedUserDto, b: ManagedUserDto) => number> = {
-  name: byName,
-  email: (a, b) => text(a.email, b.email),
-  emailVerified: (a, b) => Number(a.emailVerified) - Number(b.emailVerified),
-  role: (a, b) => ROLES.indexOf(a.role) - ROLES.indexOf(b.role),
-  extraPermissions: (a, b) => a.extraPermissions.length - b.extraPermissions.length,
-  createdAt: (a, b) => a.createdAt.localeCompare(b.createdAt),
-}
-const sorted = computed(() => {
-  const sort = sorting.value[0]
-  if (!sort) return filtered.value.toSorted(byName)
-  const compare = comparators[sort.id]!
-  // À égalité, ordre alphabétique : l'ordre reste stable d'une page à l'autre.
-  return filtered.value.toSorted((a, b) => (sort.desc ? -compare(a, b) : compare(a, b)) || byName(a, b))
+// Recherche envoyée une fois la frappe finie, pas à chaque lettre.
+const q = ref('')
+let typing: ReturnType<typeof setTimeout> | undefined
+watch(search, (value) => {
+  clearTimeout(typing)
+  typing = setTimeout(() => (q.value = value), 300)
 })
 
-// Pagination
-const pageSizes = [10, 25, 50, 100]
-const pageSize = ref(25)
+// Le tableau ne fait qu'afficher l'état du tri (`manualSorting`) : recherche, filtres, tri et page se font côté API.
+const sorting = ref<{ id: string; desc: boolean }[]>([])
+const pageSize = ref<(typeof USER_PAGE_SIZES)[number]>(25)
 const page = ref(1)
-const pageCount = computed(() => Math.max(1, Math.ceil(sorted.value.length / pageSize.value)))
-// Après une suppression, la dernière page peut se vider : on reste sur la dernière qui existe.
-const currentPage = computed(() => Math.min(page.value, pageCount.value))
-const rows = computed(() => sorted.value.slice((currentPage.value - 1) * pageSize.value, currentPage.value * pageSize.value))
-const range = computed(() => {
-  if (!sorted.value.length) return '0'
-  const from = (currentPage.value - 1) * pageSize.value + 1
-  return `${from}–${from + rows.value.length - 1}`
+watch([q, roleFilter, statusFilter, extraFilter, sorting, pageSize], () => (page.value = 1), { deep: true })
+
+const query = computed<Partial<FindUsersQuery>>(() => ({
+  q: q.value,
+  roles: roleFilter.value,
+  emailVerified: statusFilter.value,
+  extraPermissions: extraFilter.value,
+  sort: sorting.value[0]?.id as UserSort | undefined,
+  desc: sorting.value[0]?.desc,
+  page: page.value,
+  pageSize: pageSize.value,
+}))
+const { data: users, status, refresh } = await useAsyncData('users', () => api<UserPageDto>('/users', { query: query.value }), {
+  watch: [query],
+  default: () => ({ items: [], total: 0, overall: 0, page: 1 }),
 })
-watch([terms, roleFilter, statusFilter, extraFilter, sorting, pageSize], () => (page.value = 1), { deep: true })
+const range = computed(() => {
+  if (!users.value.items.length) return '0'
+  const from = (users.value.page - 1) * pageSize.value + 1
+  return `${from}–${from + users.value.items.length - 1}`
+})
 
 // Mêmes règles que l'API : seul un super admin touche à un super admin, et son propre accès ne se modifie pas.
 const manageable = (u: ManagedUserDto) => isSuperAdmin.value || u.role !== 'super_admin'
@@ -227,8 +192,8 @@ async function save(path: string, method: 'PATCH' | 'PUT', body: object, title: 
     toast.add({ title: 'Enregistrement impossible', description: apiErrorMessage(e), color: 'error', icon: 'i-lucide-circle-alert' })
     return
   }
-  users.value = users.value.map((u) => (u.id === updated.id ? updated : u))
   editing.value = updated
+  await refresh()
   if (updated.id === me.value?.id) await fetchUser()
   toast.add({ title, description: `${updated.firstName} ${updated.lastName} est à jour.`, color: 'success', icon: 'i-lucide-check' })
 }
@@ -243,8 +208,8 @@ async function confirmDelete() {
     toast.add({ title: 'Suppression impossible', description: apiErrorMessage(e), color: 'error', icon: 'i-lucide-circle-alert' })
     return
   }
-  users.value = users.value.filter((u) => u.id !== target.id)
   deleting.value = undefined
+  await refresh()
   toast.add({ title: 'Utilisateur supprimé', description: `${target.firstName} ${target.lastName} n’a plus de compte.`, color: 'success', icon: 'i-lucide-check' })
 }
 </script>
@@ -281,8 +246,9 @@ async function confirmDelete() {
       v-model:sorting="sorting"
       v-model:column-visibility="columnVisibility"
       :sorting-options="{ manualSorting: true }"
-      :data="rows"
+      :data="users.items"
       :columns="columns"
+      :loading="status === 'pending'"
       :empty="filtering ? 'Personne ne correspond à ces filtres.' : 'Aucun utilisateur.'"
       class="bg-default border-default mt-4 rounded-lg border"
     >
@@ -334,21 +300,21 @@ async function confirmDelete() {
 
     <div class="mt-4 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
       <p class="text-muted text-sm">
-        {{ range }} sur {{ sorted.length }} utilisateur{{ sorted.length > 1 ? 's' : '' }}
-        <template v-if="filtering"> ({{ users.length }} au total)</template>
+        {{ range }} sur {{ users.total }} utilisateur{{ users.total > 1 ? 's' : '' }}
+        <template v-if="filtering"> ({{ users.overall }} au total)</template>
       </p>
       <div class="flex flex-wrap items-center justify-center gap-3">
         <USelect
           v-model="pageSize"
-          :items="pageSizes.map((value) => ({ value, label: `${value} par page` }))"
+          :items="USER_PAGE_SIZES.map((value) => ({ value, label: `${value} par page` }))"
           aria-label="Lignes par page"
           class="w-36"
         />
         <UPagination
-          v-if="pageCount > 1"
-          :page="currentPage"
+          v-if="users.total > pageSize"
+          :page="users.page"
           :items-per-page="pageSize"
-          :total="sorted.length"
+          :total="users.total"
           :sibling-count="0"
           @update:page="(p) => (page = p)"
         />
