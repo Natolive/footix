@@ -65,6 +65,8 @@ Ajouter un DTO : créer `shared/src/<domaine>/<nom>.dto.ts` (un DTO par fichier)
 (imports relatifs avec l'extension `.ts`, pas d'`enum`).
 
 Hot reload actif. Après ajout d'une dépendance : `docker compose up --build -V`.
+Erreur « does not provide an export named … » après un déplacement de fichier dans `shared/` : cache Vite périmé,
+`docker compose restart frontend` puis rechargement forcé du navigateur (⌘⇧R).
 
 Éditeur (VS Code) : les dépendances ne vivent que dans Docker ; pour que l'éditeur les voie, les copier sur l'hôte
 (`node_modules` ignoré par git, à refaire après chaque nouvelle dépendance) : `docker compose cp backend:/repo/node_modules .`
@@ -72,6 +74,7 @@ Tests back : `docker compose exec backend npm test` (unitaires), `docker compose
 (e2e HTTP et intégration des adaptateurs Drizzle, vraie base). `docker compose exec backend npm run test:cov` lance tout et
 exige 100 % des lignes, instructions et fonctions de `src/` (hors `main.ts` et tables Drizzle) ; seules les branches
 ajoutées par le compilateur aux décorateurs Nest (métadonnées d'injection) ne sont jamais prises.
+Types du front : `docker compose exec frontend npm run typecheck` (`nuxi typecheck`, vue-tsc).
 
 ## Créneaux
 
@@ -159,7 +162,7 @@ ajoutées par le compilateur aux décorateurs Nest (métadonnées d'injection) n
 URL : https://foot.benit.ooo, API sous https://foot.benit.ooo/api (relayée par le front).
 HTTPS assuré par Caddy sur le serveur (`/etc/caddy/Caddyfile` : `foot.benit.ooo { reverse_proxy 127.0.0.1:3001 }`).
 
-À chaque push sur `main`, `.github/workflows/prod.yml` lance les tests, publie l'image sur
+À chaque push sur `main`, `.github/workflows/prod.yml` vérifie les types du front, lance les tests, publie l'image sur
 `ghcr.io/natolive/footix` (tags `latest` et commit), copie `docker-compose.prod.yml` sur le serveur puis y fait
 `docker compose pull && up -d`, puis supprime les anciennes images footix (seule celle en service reste).
 En parallèle, le job `badges` réécrit la branche `badges` (un seul commit) avec le nombre de tests et la couverture

@@ -32,6 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: npm ci
+      - run: npm run typecheck -w frontend
       - run: npm run db:migrate -w backend
       # Unitaires + e2e + intégration en une passe, avec la couverture (100 % exigé) : leurs chiffres alimentent les badges.
       - run: npm run test:cov -w backend -- --reporter=default --reporter=json --outputFile.json=coverage/tests.json

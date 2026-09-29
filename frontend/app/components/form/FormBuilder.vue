@@ -1,4 +1,4 @@
-<script setup lang="ts" generic="T extends Record<string, any>">
+<script setup lang="ts" generic="T extends Record<string, any>, O = T">
 import type { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { FormFieldConfig } from '~/types/form'
@@ -6,11 +6,12 @@ import type { FormFieldConfig } from '~/types/form'
 // Formulaire généré depuis une liste de champs, validé par un schéma Zod (partagé avec l'API).
 // Le bouton passe en chargement tant que la promesse de `submit` n'est pas résolue.
 // Slot `hint-<nom du champ>` pour ajouter un lien à droite du label.
+// `T` : l'état saisi, `O` : ce que le schéma en fait (dates et nombres convertis), reçu par `submit`.
 defineProps<{
-  schema: z.ZodType<T>
+  schema: z.ZodType<O, T>
   fields: FormFieldConfig<T>[]
   submitLabel: string
-  submit: (data: T) => Promise<unknown>
+  submit: (data: O) => Promise<unknown>
   /** Affiche les valeurs sans bouton d'envoi. */
   readonly?: boolean
 }>()
@@ -26,7 +27,7 @@ const shaking = ref(false)
     :state="state"
     class="space-y-6"
     :class="{ shake: shaking }"
-    @submit="(e: FormSubmitEvent<T>) => submit(e.data)"
+    @submit="(e: FormSubmitEvent<O>) => submit(e.data)"
     @error="shaking = true"
     @animationend.self="shaking = false"
   >
