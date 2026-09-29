@@ -10,6 +10,8 @@ export const events = pgTable('events', {
   durationMinutes: integer('duration_minutes').notNull().default(60),
   maxParticipants: integer('max_participants').notNull(),
   paymentUrl: text('payment_url'),
+  // Annulé : reste affiché jusqu'à sa date, sondage fermé.
+  cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

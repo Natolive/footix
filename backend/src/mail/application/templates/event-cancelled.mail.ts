@@ -11,7 +11,7 @@ export const eventCancelledMail = (
   html: layout({
     title: 'Le match est annulé',
     preheader: `${event.title}, ${when(event.startsAt)} à ${event.location} n'aura pas lieu.`,
-    content: html`${paragraph(`Salut ${to.firstName}, le créneau « ${event.title} » du ${when(event.startsAt)} à ${event.location} a été supprimé par les organisateurs.`)}
+    content: html`${paragraph(`Salut ${to.firstName}, le créneau « ${event.title} » du ${when(event.startsAt)} à ${event.location} a été annulé par les organisateurs.`)}
 ${button('Voir les autres créneaux', appUrl('/'))}
 ${note('Pense à retirer le match de ton agenda. Si tu avais déjà payé ta place, vois avec les organisateurs pour le remboursement.')}`,
   }),

@@ -14,12 +14,12 @@ export class DeleteEventService {
     private readonly mailer: Mailer,
   ) {}
 
-  // Les inscrits qui venaient sont prévenus par email, sauf si le match a déjà commencé.
+  // Les inscrits qui venaient sont prévenus par email, sauf si le match a déjà commencé ou a déjà été annulé (déjà prévenus).
   async execute(id: string): Promise<void> {
     const event = orThrow(await this.events.findById(id), EventNotFoundError);
     const participants = await this.events.findParticipants([id]);
     await this.events.delete(id);
-    if (event.startsAt <= new Date()) return;
+    if (event.startsAt <= new Date() || event.cancelledAt) return;
     // ponytail: email perdu s'il échoue (pas de renvoi), la suppression reste faite.
     await Promise.all(
       participants

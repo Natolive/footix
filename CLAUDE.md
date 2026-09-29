@@ -17,7 +17,7 @@
 - Un droit par action, nommé `<catégorie>.<action>` (`users.read`, `users.update_role`) ; jamais de droit fourre-tout type `manage`.
 - Nouvelle action protégée = nouveau droit dans `PERMISSIONS` + `PERMISSION_LABELS` ; nouvelle catégorie = libellé dans `PERMISSION_CATEGORY_LABELS`.
 - Droits effectifs = droits du rôle + `users.extra_permissions` de la personne, renvoyés dans `UserDto.permissions`.
-- Rôles : `user` (donné à l'inscription), `admin` (en plus : organise les créneaux, catégorie `planning`) et `super_admin` (a toujours tout, non modifiable).
+- Rôles : `user` (donné à l'inscription), `admin` (en plus : les droits `planning` listés dans `DEFAULT_ROLE_PERMISSIONS.admin`, pas `planning.delete_event` : il annule, seul le super admin supprime ; nouveau droit `planning` = l'ajouter à cette liste si l'admin doit l'avoir) et `super_admin` (a toujours tout, non modifiable).
 - Par défaut `user` a tout sauf les catégories d'administration (`ADMIN_CATEGORIES` : `roles`, `users`, `planning`, `email_domains`) ; une catégorie d'admin nouvelle va dans cette liste.
 - `role_permissions` ne stocke que ce qu'un admin a modifié ; sans ligne, le défaut du code s'applique (nouveau droit = pas de migration).
 - Droit supprimé ou renommé = migration qui nettoie `role_permissions` et `users.extra_permissions`.

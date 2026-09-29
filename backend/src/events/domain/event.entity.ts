@@ -7,5 +7,6 @@ export interface Event {
   durationMinutes: number;
   maxParticipants: number;
   paymentUrl: string | null;
+  cancelledAt: Date | null;
   createdAt: Date;
 }

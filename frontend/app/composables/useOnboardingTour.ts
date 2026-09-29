@@ -13,6 +13,7 @@ const demoEvent = (): EventDto => ({
   durationMinutes: 60,
   maxParticipants: 10,
   paymentUrl: 'https://lydia-app.com/',
+  cancelledAt: null,
   participants: [
     { id: 'demo-1', firstName: 'Camille', lastName: 'Martin' },
     { id: 'demo-2', firstName: 'Hugo', lastName: 'Bernard' },

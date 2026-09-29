@@ -4,7 +4,7 @@ import type { FormFieldConfig } from '~/types/form'
 
 // Un créneau : infos, places restantes, réponses au sondage, et les boutons pour répondre.
 const props = defineProps<{ event: EventDto }>()
-const emit = defineEmits<{ updated: [event: EventDto], edit: [], delete: [] }>()
+const emit = defineEmits<{ updated: [event: EventDto], edit: [], cancel: [], delete: [] }>()
 
 const api = useApi()
 const toast = useToast()
@@ -22,11 +22,13 @@ const taken = computed(() => props.event.participants.length + props.event.guest
 const coming = computed(() => props.event.participants.some((p) => p.id === user.value?.id))
 const declined = computed(() => props.event.declined.some((p) => p.id === user.value?.id))
 const full = computed(() => taken.value >= props.event.maxParticipants)
+// Annulé : reste affiché pour que personne ne vienne, mais plus rien ne se modifie (même règle que l'API).
+const cancelled = computed(() => !!props.event.cancelledAt)
 // Rebond de « Je viens » seulement au clic, pas au chargement de la page.
 const kicked = ref(false)
 
 // Même règle que l'API : ses propres invités, ou tous avec le droit de modifier les créneaux.
-const removable = (g: GuestDto) => g.invitedBy.id === user.value?.id || can('planning.update_event')
+const removable = (g: GuestDto) => !cancelled.value && (g.invitedBy.id === user.value?.id || can('planning.update_event'))
 const guestFields: FormFieldConfig<AddGuestDto>[] = [{ name: 'name', label: 'Nom', placeholder: 'Paul' }]
 const guest = ref<AddGuestDto>()
 
@@ -86,17 +88,21 @@ async function confirmLeave() {
 </script>
 
 <template>
-  <UCard data-tour="event" :ui="{ root: 'row-span-6 grid grid-rows-subgrid gap-y-0 p-4 sm:p-6', body: 'contents' }">
+  <UCard data-tour="event" :class="{ 'opacity-60': cancelled }" :ui="{ root: 'row-span-6 grid grid-rows-subgrid gap-y-0 p-4 sm:p-6', body: 'contents' }">
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0">
-        <p class="text-primary text-sm font-semibold first-letter:uppercase">{{ when }}</p>
+        <p class="flex flex-wrap items-center gap-2 text-sm font-semibold">
+          <span class="first-letter:uppercase" :class="cancelled ? 'text-muted line-through' : 'text-primary'">{{ when }}</span>
+          <UBadge v-if="cancelled" color="error" variant="subtle" icon="i-lucide-ban">Annulé</UBadge>
+        </p>
         <h2 class="font-display text-highlighted mt-1.5 text-2xl font-bold tracking-tight leading-tight break-words">{{ event.title }}</h2>
         <p class="text-muted mt-2 flex items-center gap-1.5 text-sm">
           <UIcon name="i-lucide-map-pin" class="shrink-0" />{{ event.location }}
         </p>
       </div>
       <div class="flex shrink-0">
-        <UButton v-if="can('planning.update_event')" icon="i-lucide-pencil" color="neutral" variant="ghost" :aria-label="`Modifier ${event.title}`" @click="emit('edit')" />
+        <UButton v-if="!cancelled && can('planning.update_event')" icon="i-lucide-pencil" color="neutral" variant="ghost" :aria-label="`Modifier ${event.title}`" @click="emit('edit')" />
+        <UButton v-if="!cancelled && can('planning.cancel_event')" icon="i-lucide-ban" color="error" variant="ghost" :aria-label="`Annuler ${event.title}`" @click="emit('cancel')" />
         <UButton v-if="can('planning.delete_event')" icon="i-lucide-trash-2" color="error" variant="ghost" :aria-label="`Supprimer ${event.title}`" @click="emit('delete')" />
       </div>
     </div>
@@ -150,7 +156,8 @@ async function confirmLeave() {
       </template>
     </p>
 
-    <div class="space-y-2 self-end pt-5">
+    <p v-if="cancelled" class="text-error self-end pt-5 text-sm font-medium">Match annulé par les organisateurs, il n’aura pas lieu.</p>
+    <div v-else class="space-y-2 self-end pt-5">
       <UButton
         v-if="event.paymentUrl"
         :to="event.paymentUrl"

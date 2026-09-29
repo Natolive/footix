@@ -84,15 +84,17 @@ ajoutées par le compilateur aux décorateurs Nest (métadonnées d'injection) n
 - Le premier « je viens » qui prend une place envoie un email de confirmation avec le match en `.ics` (fin = début + durée) :
   un seul par personne et par créneau (`event_participants.confirmation_sent_at`), même si elle change d'avis.
   Un échec d'envoi est loggé sans annuler l'inscription.
-- Supprimer un créneau pas encore commencé envoie un email d'annulation à ceux qui venaient (pas aux « je ne viens pas ») ;
-  un échec d'envoi est loggé, la suppression reste faite.
+- Annuler un créneau pas encore commencé (`POST /events/:id/cancel`, droit `planning.cancel_event`, `events.cancelled_at`) :
+  il reste affiché, marqué « Annulé », jusqu'à sa date ; plus de réponse, d'invité ni de modification. Pas de retour en arrière.
+- Annuler, ou supprimer un créneau pas encore commencé ni déjà annulé, envoie un email d'annulation à ceux qui venaient
+  (pas aux « je ne viens pas ») ; un échec d'envoi est loggé, l'annulation ou la suppression reste faite.
 - Se désinscrire passe par une modal de confirmation (qui liste ses invités, libérés avec soi) ; recliquer sur
   la réponse déjà donnée ne fait rien.
 - Dispos : à l'inscription puis dans son profil, chacun coche les jours de la semaine où il peut jouer (`PUT /auth/me/availability`,
   droit `profile.update_availability`, `users.available_days`). Les organisateurs voient qui est dispo chaque jour
   dans l'onglet Dispos de la barre de navigation (`/availability`, `GET /users/availability`,
   droit `planning.read_availability`), comptes confirmés seulement.
-- Rôles : `user` répond aux sondages et ramène des invités, `admin` organise aussi les créneaux (catégorie de droits `planning`), `super_admin` a tout.
+- Rôles : `user` répond aux sondages et ramène des invités, `admin` organise aussi les créneaux (catégorie de droits `planning`) sauf la suppression : il les annule, seul `super_admin` supprime ; `super_admin` a tout.
   Premier super admin : `UPDATE users SET role = 'super_admin' WHERE email = '…'`.
 
 ## Emails

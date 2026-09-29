@@ -1,5 +1,6 @@
 import { AddGuestService } from '@src/events/application/add-guest.service.js';
 import { AnswerEventService } from '@src/events/application/answer-event.service.js';
+import { CancelEventService } from '@src/events/application/cancel-event.service.js';
 import { CreateEventService } from '@src/events/application/create-event.service.js';
 import { DeleteEventService } from '@src/events/application/delete-event.service.js';
 import { FindUpcomingEventsService } from '@src/events/application/find-upcoming-events.service.js';
@@ -39,6 +40,7 @@ export function setupEvents() {
     findUpcoming: new FindUpcomingEventsService(repository),
     create: new CreateEventService(repository),
     update: new UpdateEventService(repository),
+    cancel: new CancelEventService(repository, mailer),
     delete: new DeleteEventService(repository, mailer),
     answer: new AnswerEventService(repository, mailer),
     addGuest: new AddGuestService(repository),

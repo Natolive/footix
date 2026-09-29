@@ -11,6 +11,8 @@ export interface EventDto {
   durationMinutes: number
   maxParticipants: number
   paymentUrl: string | null
+  // Annulé par un organisateur : reste affiché jusqu'à sa date, sondage fermé.
+  cancelledAt: string | null
   // Ceux qui viennent, seuls à prendre une place.
   participants: ParticipantDto[]
   // Ceux qui ont répondu « je ne viens pas ».

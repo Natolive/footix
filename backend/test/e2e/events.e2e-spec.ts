@@ -90,6 +90,11 @@ describe('Events (e2e)', () => {
     const after = (await orga.get('/events').expect(200)).body.find((e: { id: string }) => e.id === created.id);
     expect(after).toMatchObject({ participants: [], guests: [] });
     expect(after.declined.map((p: { id: string }) => p.id)).not.toContain(leaMe.id);
+    // Annulé : reste listé, sondage fermé.
+    await max.post(`/events/${created.id}/cancel`).expect(403);
+    const { body: cancelled } = await orga.post(`/events/${created.id}/cancel`).expect(200);
+    expect(cancelled.cancelledAt).toEqual(expect.any(String));
+    await answer(max, true).expect(409);
     await orga.delete(`/events/${created.id}`).expect(204);
   });
 });

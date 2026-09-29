@@ -18,7 +18,7 @@ describe('RolePermissionsService', () => {
       'events.invite_guest',
       'planning.create_event',
       'planning.update_event',
-      'planning.delete_event',
+      'planning.cancel_event',
       'planning.read_availability',
     ]);
   });

@@ -14,6 +14,7 @@ import { CurrentUser } from '../../../auth/infrastructure/http/current-user.deco
 import { ZodValidationPipe } from '../../../common/infrastructure/http/pipes/zod-validation.pipe.js';
 import { AddGuestService } from '../../application/add-guest.service.js';
 import { AnswerEventService } from '../../application/answer-event.service.js';
+import { CancelEventService } from '../../application/cancel-event.service.js';
 import { CreateEventService } from '../../application/create-event.service.js';
 import { DeleteEventService } from '../../application/delete-event.service.js';
 import { FindUpcomingEventsService } from '../../application/find-upcoming-events.service.js';
@@ -26,6 +27,7 @@ export class EventsController {
     private readonly findUpcomingEventsService: FindUpcomingEventsService,
     private readonly createEventService: CreateEventService,
     private readonly updateEventService: UpdateEventService,
+    private readonly cancelEventService: CancelEventService,
     private readonly deleteEventService: DeleteEventService,
     private readonly answerEventService: AnswerEventService,
     private readonly addGuestService: AddGuestService,
@@ -51,6 +53,13 @@ export class EventsController {
     @Body(new ZodValidationPipe(eventSchema)) dto: SaveEventDto,
   ): Promise<EventDto> {
     return this.updateEventService.execute(id, dto);
+  }
+
+  @Post(':id/cancel')
+  @HttpCode(200)
+  @Authorize('planning.cancel_event')
+  cancel(@Param('id', ParseUUIDPipe) id: string): Promise<EventDto> {
+    return this.cancelEventService.execute(id);
   }
 
   @Delete(':id')

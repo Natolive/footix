@@ -58,6 +58,22 @@ async function save(data: SaveEventDto) {
   toast.add({ title: id ? 'Créneau enregistré' : 'Créneau créé', description: `« ${saved.title} » est visible par tout le monde.`, color: 'success', icon: 'i-lucide-check' })
 }
 
+const cancelling = ref<EventDto>()
+
+async function confirmCancel() {
+  const target = cancelling.value!
+  let updated: EventDto
+  try {
+    updated = await api<EventDto>(`/events/${target.id}/cancel`, { method: 'POST' })
+  } catch (e) {
+    toast.add({ title: 'Annulation impossible', description: apiErrorMessage(e), color: 'error', icon: 'i-lucide-circle-alert' })
+    return
+  }
+  replace(updated)
+  cancelling.value = undefined
+  toast.add({ title: 'Créneau annulé', description: `« ${target.title} » reste affiché comme annulé, ceux qui venaient sont prévenus.`, color: 'success', icon: 'i-lucide-check' })
+}
+
 const deleting = ref<EventDto>()
 
 async function confirmDelete() {
@@ -94,6 +110,7 @@ async function confirmDelete() {
         :event="event"
         @updated="replace"
         @edit="openEdit(event)"
+        @cancel="cancelling = event"
         @delete="deleting = event"
       />
     </div>
@@ -124,14 +141,28 @@ async function confirmDelete() {
     </UModal>
 
     <UModal
+      :open="!!cancelling"
+      title="Annuler le créneau ?"
+      :description="`« ${cancelling?.title} » restera affiché comme annulé, le sondage sera fermé et ceux qui venaient seront prévenus par email. Impossible de revenir en arrière.`"
+      @update:open="(open) => !open && (cancelling = undefined)"
+    >
+      <template #footer>
+        <div class="flex w-full justify-end gap-2">
+          <UButton color="neutral" variant="ghost" @click="cancelling = undefined">Garder le créneau</UButton>
+          <UButton color="error" icon="i-lucide-ban" loading-auto @click="confirmCancel">Annuler le créneau</UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <UModal
       :open="!!deleting"
       title="Supprimer le créneau ?"
-      :description="`« ${deleting?.title} » et les réponses au sondage seront supprimés.`"
+      :description="`« ${deleting?.title} » et les réponses au sondage seront supprimés${deleting?.cancelledAt ? '' : ', ceux qui venaient seront prévenus par email'}.`"
       @update:open="(open) => !open && (deleting = undefined)"
     >
       <template #footer>
         <div class="flex w-full justify-end gap-2">
-          <UButton color="neutral" variant="ghost" @click="deleting = undefined">Annuler</UButton>
+          <UButton color="neutral" variant="ghost" @click="deleting = undefined">Garder le créneau</UButton>
           <UButton color="error" icon="i-lucide-trash-2" loading-auto @click="confirmDelete">Supprimer le créneau</UButton>
         </div>
       </template>

@@ -17,6 +17,7 @@ export const PERMISSIONS = [
   'events.invite_guest',
   'planning.create_event',
   'planning.update_event',
+  'planning.cancel_event',
   'planning.delete_event',
   'planning.read_availability',
   'email_domains.read',
@@ -43,6 +44,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   'events.invite_guest': 'Ramener des invités sans compte',
   'planning.create_event': 'Créer des créneaux',
   'planning.update_event': 'Modifier les créneaux',
+  'planning.cancel_event': 'Annuler les créneaux (reste visible, marqué annulé)',
   'planning.delete_event': 'Supprimer les créneaux',
   'planning.read_availability': 'Voir les dispos des joueurs',
   'email_domains.read': 'Voir les domaines email autorisés',
@@ -78,10 +80,12 @@ export const ROLE_LABELS: Record<Role, string> = { user: 'Utilisateur', admin: '
 const ADMIN_CATEGORIES: readonly PermissionCategory[] = ['roles', 'users', 'planning', 'email_domains']
 const isAdmin = (p: Permission) => ADMIN_CATEGORIES.some((c) => p.startsWith(`${c}.`))
 
+const USER_PERMISSIONS = PERMISSIONS.filter((p) => !isAdmin(p))
+
 // Droits par défaut, tant qu'un admin ne les a pas modifiés : user a tout sauf l'administration,
-// admin y ajoute l'organisation des créneaux, super_admin a tout.
+// admin y ajoute l'organisation des créneaux listée ici (pas la suppression : il annule), super_admin a tout.
 export const DEFAULT_ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
-  user: PERMISSIONS.filter((p) => !isAdmin(p)),
-  admin: PERMISSIONS.filter((p) => !isAdmin(p) || p.startsWith('planning.')),
+  user: USER_PERMISSIONS,
+  admin: [...USER_PERMISSIONS, 'planning.create_event', 'planning.update_event', 'planning.cancel_event', 'planning.read_availability'],
   super_admin: PERMISSIONS,
 }
